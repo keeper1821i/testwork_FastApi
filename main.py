@@ -1,47 +1,26 @@
-import json
-import os
-from typing import List, Dict
+import datetime
 
-from fastapi import FastAPI, Request
-from pydantic import BaseModel
+from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
 
-from models import Rates_Pydantic, Rates, RatesIn_Pydantic
+from schemas import RateList
+from services import get_cost_of_insurance, create_tariff
 
 app = FastAPI()
 
 
-basedir = os.path.abspath(os.path.dirname(__file__))
 
 
-@app.get("/rates", response_model=List[Rates_Pydantic])
-async def get_rates():
-    return await Rates_Pydantic.from_queryset(Rates.all())
+@app.get("/rates")
+async def get_rates(cargo_type, cost, date):
+    return {'status': 200, ' Cтоимость страхования': await get_cost_of_insurance(cargo_type, cost, date)}
 
-
-class Rate(BaseModel):
-    cargo_type: str
-    rate: str
-
-
-class RateList(BaseModel):
-    data: Dict[str, List[Rate]]
-
-
-test_list = []
 
 @app.post("/rates")
 async def add_body(data: RateList):
-    test_list.extend(data)
-    key_list =data.data.values()
-
-    # for i in data:
-    #     # await Rates.create(cargo_type=data.data[i][0].cargo_type,
-    #     #                    rate=float(data.data[i][0].rate),
-    #     #                    date=i)
-    #     print(i[1].keys())
-    #     # print(data.data[i][0].cargo_type)
-    #     # print(data.data[i][0].rate)
+    for key, value in data.data.items():
+        for i in value:
+            await create_tariff(i.cargo_type, i.rate, datetime.datetime.strptime(key, '%Y-%m-%d'))
     return {'status': 200}
 
 
