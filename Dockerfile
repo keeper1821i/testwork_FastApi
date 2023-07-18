@@ -1,14 +1,8 @@
-FROM ubuntu:latest
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.11
 
-RUN apt-get update -qy
+COPY ./requirements.txt /app/requirements.txt
 
-RUN apt-get install -qy python3.10 python3-pip
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY . /app
-
-WORKDIR /app
-
-RUN pip install -r requirements.txt
-
-CMD uvicorn main:app --reload
+COPY ./app /app
 
